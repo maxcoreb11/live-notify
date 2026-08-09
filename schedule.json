@@ -1,5 +1,5 @@
 [
-    {
+  {
     "date": "2026-08-09",
     "time": "21:49",
     "day_th": "อาทิตย์",
@@ -9,7 +9,9 @@
     "channel": "MONOMAX SPORTS",
     "free_tv": "เสียเงิน",
     "club": "800 Club",
-    "notified_leads": []
+    "notified_leads": [
+      60
+    ]
   },
   {
     "date": "2026-08-01",
