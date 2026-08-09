@@ -298,7 +298,8 @@
     "club": "800 Club",
     "time": "20:30",
     "notified_leads": [
-      10
+      10,
+      0
     ]
   },
   {
