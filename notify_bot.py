@@ -134,7 +134,6 @@ def format_caption(event: dict, lead_minutes: int) -> str:
         lines.append(f"📺 ดูที่: {event['channel']}{free_tv}")
     if event.get("club"):
         lines.append(f"👤 ผู้รับผิดชอบ: {event['club']}")
-    lines.append("\n_เตรียมทีมให้พร้อมสำหรับการถ่ายทอด/ตัดคลิปนะครับ_")
     return "\n".join(lines)
 
 
