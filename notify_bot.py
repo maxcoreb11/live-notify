@@ -38,47 +38,17 @@ GRACE_MINUTES = 20
 # ─────────────────────────────────────────────────────────────
 #  ปุ่มใต้ข้อความ (แก้ตรงนี้ได้เลย)
 # ─────────────────────────────────────────────────────────────
-# ปุ่มหลัก อยู่บนสุดของทุกข้อความ — ลิงก์ไลฟ์ของช่องเรา
-# ตั้งเป็น None ถ้าไม่อยากให้มีปุ่มนี้
-LIVE_BUTTON = {"text": "รับชมถ่ายทอดสด", "url": "https://t.me/u800live?livestream"}
-
-# ปุ่มที่ขึ้นทุกข้อความ ไม่ว่ารายการไหน — ใส่เพิ่ม/ลบได้ตามใจ
+# ปุ่มเดียวใต้ทุกข้อความ — ลิงก์ไลฟ์ของช่องเรา
 # ต้องเป็นลิงก์ (URL) เท่านั้น ปุ่มแบบกดแล้วบอทตอบกลับใช้ไม่ได้กับระบบนี้
-EXTRA_BUTTONS = [
-    {"text": "📅 ดูตารางทั้งเดือน",
-     "url": "https://github.com/maxcoreb11/live-notify/blob/main/schedule.json"},
-]
-
-# ปุ่ม "ดูสด" จะขึ้นเมื่อชื่อช่องในตาราง (คอลัมน์ "ดูที่ไหน") มีคำเหล่านี้
-# ⚠️ ลิงก์ด้านล่างเป็นหน้าเว็บหลักของแต่ละเจ้า ควรเช็กให้ตรงกับหน้าดูสดจริงก่อนใช้งาน
-CHANNEL_LINKS = {
-    "Ch7HD": "https://www.ch7.com/live",
-    "MONOMAX": "https://www.monomax.me/",
-    "TrueVisions": "https://trueid.net/",
-    "TrueID": "https://trueid.net/",
-    "ONEFC": "https://www.onefc.com/",
-}
+# ตั้งเป็น None ถ้าไม่อยากให้มีปุ่มเลย
+LIVE_BUTTON = {"text": "รับชมถ่ายทอดสด", "url": "https://t.me/u800live?livestream"}
 
 
 def build_keyboard(event: dict):
     """สร้างปุ่มใต้ข้อความ คืนค่า None ถ้าไม่มีปุ่มเลย"""
-    rows = []
-
-    if LIVE_BUTTON:
-        rows.append([LIVE_BUTTON])
-
-    # ถ้ารายการนั้นใส่ลิงก์เฉพาะไว้ใน schedule.json (ฟิลด์ "link") ให้ใช้อันนั้นก่อน
-    if event.get("link"):
-        rows.append([{"text": "▶️ ดูสด", "url": event["link"]}])
-    else:
-        channel = event.get("channel", "")
-        for name, url in CHANNEL_LINKS.items():
-            if name.lower() in channel.lower():
-                rows.append([{"text": f"▶️ ดูทาง {name}", "url": url}])
-                break
-
-    rows.extend([[button] for button in EXTRA_BUTTONS])
-    return {"inline_keyboard": rows} if rows else None
+    if not LIVE_BUTTON:
+        return None
+    return {"inline_keyboard": [[LIVE_BUTTON]]}
 
 
 def log(msg: str):
