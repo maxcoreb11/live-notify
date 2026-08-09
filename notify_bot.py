@@ -35,6 +35,51 @@ BANGKOK = ZoneInfo("Asia/Bangkok")
 # อีกหลายนาทีถ้าคิวของ GitHub ยาว จึงตั้งช่วงนี้ให้กว้างพอ (นาที) เพื่อไม่ให้พลาดแจ้งเตือน
 GRACE_MINUTES = 20
 
+# ─────────────────────────────────────────────────────────────
+#  ปุ่มใต้ข้อความ (แก้ตรงนี้ได้เลย)
+# ─────────────────────────────────────────────────────────────
+# ปุ่มหลัก อยู่บนสุดของทุกข้อความ — ลิงก์ไลฟ์ของช่องเรา
+# ตั้งเป็น None ถ้าไม่อยากให้มีปุ่มนี้
+LIVE_BUTTON = {"text": "รับชมถ่ายทอดสด", "url": "https://t.me/u800live?livestream"}
+
+# ปุ่มที่ขึ้นทุกข้อความ ไม่ว่ารายการไหน — ใส่เพิ่ม/ลบได้ตามใจ
+# ต้องเป็นลิงก์ (URL) เท่านั้น ปุ่มแบบกดแล้วบอทตอบกลับใช้ไม่ได้กับระบบนี้
+EXTRA_BUTTONS = [
+    {"text": "📅 ดูตารางทั้งเดือน",
+     "url": "https://github.com/maxcoreb11/live-notify/blob/main/schedule.json"},
+]
+
+# ปุ่ม "ดูสด" จะขึ้นเมื่อชื่อช่องในตาราง (คอลัมน์ "ดูที่ไหน") มีคำเหล่านี้
+# ⚠️ ลิงก์ด้านล่างเป็นหน้าเว็บหลักของแต่ละเจ้า ควรเช็กให้ตรงกับหน้าดูสดจริงก่อนใช้งาน
+CHANNEL_LINKS = {
+    "Ch7HD": "https://www.ch7.com/live",
+    "MONOMAX": "https://www.monomax.me/",
+    "TrueVisions": "https://trueid.net/",
+    "TrueID": "https://trueid.net/",
+    "ONEFC": "https://www.onefc.com/",
+}
+
+
+def build_keyboard(event: dict):
+    """สร้างปุ่มใต้ข้อความ คืนค่า None ถ้าไม่มีปุ่มเลย"""
+    rows = []
+
+    if LIVE_BUTTON:
+        rows.append([LIVE_BUTTON])
+
+    # ถ้ารายการนั้นใส่ลิงก์เฉพาะไว้ใน schedule.json (ฟิลด์ "link") ให้ใช้อันนั้นก่อน
+    if event.get("link"):
+        rows.append([{"text": "▶️ ดูสด", "url": event["link"]}])
+    else:
+        channel = event.get("channel", "")
+        for name, url in CHANNEL_LINKS.items():
+            if name.lower() in channel.lower():
+                rows.append([{"text": f"▶️ ดูทาง {name}", "url": url}])
+                break
+
+    rows.extend([[button] for button in EXTRA_BUTTONS])
+    return {"inline_keyboard": rows} if rows else None
+
 
 def log(msg: str):
     line = f"[{datetime.now(BANGKOK).isoformat(timespec='seconds')}] {msg}"
@@ -58,12 +103,16 @@ def save_schedule(events):
         json.dump(events, f, ensure_ascii=False, indent=2)
 
 
-def send_telegram_photo(bot_token: str, chat_id: str, photo_path: str, caption: str) -> bool:
+def send_telegram_photo(bot_token: str, chat_id: str, photo_path: str, caption: str,
+                        reply_markup=None) -> bool:
     url = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
     try:
         with open(photo_path, "rb") as photo_file:
             files = {"photo": photo_file}
             data = {"chat_id": chat_id, "caption": caption, "parse_mode": "Markdown"}
+            if reply_markup:
+                # ส่งแบบ multipart ต้องแปลงปุ่มเป็นข้อความ JSON ก่อน
+                data["reply_markup"] = json.dumps(reply_markup, ensure_ascii=False)
             resp = requests.post(url, data=data, files=files, timeout=30)
         if resp.status_code == 200:
             return True
@@ -74,7 +123,7 @@ def send_telegram_photo(bot_token: str, chat_id: str, photo_path: str, caption: 
         return False
 
 
-def send_telegram_message(bot_token: str, chat_id: str, text: str) -> bool:
+def send_telegram_message(bot_token: str, chat_id: str, text: str, reply_markup=None) -> bool:
     """สำรอง: ส่งข้อความล้วน ใช้เมื่อสร้าง/ส่งรูปแบนเนอร์ไม่สำเร็จ"""
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
@@ -83,6 +132,8 @@ def send_telegram_message(bot_token: str, chat_id: str, text: str) -> bool:
         "parse_mode": "Markdown",
         "disable_web_page_preview": True,
     }
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
     try:
         resp = requests.post(url, json=payload, timeout=15)
         if resp.status_code == 200:
@@ -169,16 +220,17 @@ def main():
             # ถึงเวลาแจ้งเตือนแล้ว (อยู่ในช่วง trigger_time ถึง trigger_time+GRACE)
             if trigger_time <= now <= trigger_time + timedelta(minutes=GRACE_MINUTES):
                 caption = format_caption(event, lead)
+                keyboard = build_keyboard(event)
                 sent = False
                 try:
                     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
                         banner_path = generate_banner(event, lead, tmp.name)
-                    sent = send_telegram_photo(bot_token, chat_id, banner_path, caption)
+                    sent = send_telegram_photo(bot_token, chat_id, banner_path, caption, keyboard)
                     os.remove(banner_path)
                 except Exception as e:
                     log(f"WARNING: สร้างรูปแบนเนอร์ไม่สำเร็จ ({e}) จะส่งเป็นข้อความล้วนแทน")
                 if not sent:
-                    sent = send_telegram_message(bot_token, chat_id, caption)
+                    sent = send_telegram_message(bot_token, chat_id, caption, keyboard)
                 if sent:
                     notified_leads.append(lead)
                     changed = True
