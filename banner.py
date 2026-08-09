@@ -130,13 +130,7 @@ def generate_banner(event: dict, lead_minutes: int, out_path: str) -> str:
     time_font = _font("Kanit-Bold.ttf", 44)
     time_text = f"เวลาไทย {event.get('time', '')} น.  |  วัน{event.get('day_th', '')}ที่ {event.get('date', '')}"
     tw = draw.textlength(time_text, font=time_font)
-    draw.text(((WIDTH - tw) / 2, HEIGHT - 130), time_text, font=time_font, fill=accent)
-
-    # แถบชื่อช่อง ล่างสุด
-    brand_font = _font("Kanit-Medium.ttf", 26)
-    brand_text = "11 PRO NO FAKE"
-    bw = draw.textlength(brand_text, font=brand_font)
-    draw.text(((WIDTH - bw) / 2, HEIGHT - 66), brand_text, font=brand_font, fill=(180, 180, 180))
+    draw.text(((WIDTH - tw) / 2, HEIGHT - 110), time_text, font=time_font, fill=accent)
 
     img.save(out_path, "PNG")
     return out_path
