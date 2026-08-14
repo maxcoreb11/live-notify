@@ -360,7 +360,9 @@
     "free_tv": "บางคู่ฟรี",
     "club": "800 Club",
     "time": "18:30",
-    "notified_leads": []
+    "notified_leads": [
+      10
+    ]
   },
   {
     "date": "2026-08-15",
