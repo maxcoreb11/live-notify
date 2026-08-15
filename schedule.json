@@ -374,7 +374,9 @@
     "free_tv": "เสียเงิน",
     "club": "800 Club",
     "time": "19:00",
-    "notified_leads": []
+    "notified_leads": [
+      60
+    ]
   },
   {
     "date": "2026-08-16",
